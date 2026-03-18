@@ -1,1 +1,31 @@
+syntax = "proto3";
 
+option java_package = "generated.assessment";
+option java_multiple_files = true;
+
+service AssessmentService {
+
+  rpc submitExam (ExamSubmission) returns (GradeResponse);
+
+  rpc streamGrades (AssessmentStudentId) returns (stream GradeUpdate);
+}
+
+message ExamSubmission {
+  string studentId = 1;
+  string courseId = 2;
+  string answers = 3;
+}
+
+message GradeResponse {
+  double grade = 1;
+  string feedback = 2;
+}
+
+message AssessmentStudentId {
+  string studentId = 1;
+}
+
+message GradeUpdate {
+  string courseId = 1;
+  double grade = 2;
+}

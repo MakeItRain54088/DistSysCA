@@ -1,1 +1,37 @@
+syntax = "proto3";
 
+option java_package = "generated.course";
+option java_multiple_files = true;
+
+service CourseService {
+
+  rpc createCourse (CourseRequest) returns (CourseResponse);
+
+  rpc streamAvailableCourses (Empty) returns (stream Course);
+
+  rpc liveClassChat (stream ChatMessage) returns (stream ChatMessage);
+}
+
+message CourseRequest {
+  string courseId = 1;
+  string title = 2;
+  string instructor = 3;
+}
+
+message CourseResponse {
+  string message = 1;
+}
+
+message Course {
+  string courseId = 1;
+  string title = 2;
+  string instructor = 3;
+}
+
+message ChatMessage {
+  string sender = 1;
+  string message = 2;
+  string timestamp = 3;
+}
+
+message Empty {}

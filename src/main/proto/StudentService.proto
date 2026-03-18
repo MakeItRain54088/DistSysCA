@@ -1,1 +1,44 @@
+syntax = "proto3";
 
+option java_package = "generated.student";
+option java_multiple_files = true;
+
+service StudentService {
+
+  rpc registerStudent (StudentRequest) returns (StudentResponse);
+
+  rpc streamAttendance (StudentId) returns (stream AttendanceRecord);
+
+  rpc uploadLearningActivity (stream ActivityLog) returns (UploadSummary);
+}
+
+message StudentRequest {
+  string studentId = 1;
+  string name = 2;
+  string email = 3;
+}
+
+message StudentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message StudentId {
+  string studentId = 1;
+}
+
+message AttendanceRecord {
+  string date = 1;
+  string status = 2;
+}
+
+message ActivityLog {
+  string studentId = 1;
+  int32 durationMinutes = 2;
+  string topic = 3;
+}
+
+message UploadSummary {
+  int32 totalDuration = 1;
+  int32 totalSessions = 2;
+}
