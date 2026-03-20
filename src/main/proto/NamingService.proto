@@ -1,1 +1,25 @@
+syntax = "proto3";
 
+option java_package = "generated.naming";
+option java_multiple_files = true;
+
+service NamingService {
+
+  rpc registerService (ServiceInfo) returns (RegisterResponse);
+
+  rpc discoverService (ServiceRequest) returns (ServiceInfo);
+}
+
+message ServiceInfo {
+  string serviceName = 1;
+  string host = 2;
+  int32 port = 3;
+}
+
+message RegisterResponse {
+  string message = 1;
+}
+
+message ServiceRequest {
+  string serviceName = 1;
+}

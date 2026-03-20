@@ -1,0 +1,177 @@
+Unary RPC Template
+@Override
+public void methodName(Request request,
+                       StreamObserver<Response> responseObserver) {
+
+    // Step 1: Validate input
+    if (/* invalid condition */) {
+        responseObserver.onError(
+            Status.INVALID_ARGUMENT
+                .withDescription("Invalid input")
+                .asRuntimeException()
+        );
+        return;
+    }
+
+    // Step 2: Business logic
+    Response response = Response.newBuilder()
+            .build();
+
+    // Step 3: Return result
+    responseObserver.onNext(response);
+    responseObserver.onCompleted();
+}
+
+Server Streaming Template
+@Override
+public void streamMethod(Request request,
+                         StreamObserver<Response> responseObserver) {
+
+    // Check condition
+    if (/* not found */) {
+        responseObserver.onError(
+            Status.NOT_FOUND
+                .withDescription("Resource not found")
+                .asRuntimeException()
+        );
+        return;
+    }
+
+    // Send multiple responses
+    for (Response r : dataList) {
+        responseObserver.onNext(r);
+    }
+
+    responseObserver.onCompleted();
+}
+
+Client Streaming Template
+@Override
+public StreamObserver<Request> clientStream(
+        StreamObserver<Response> responseObserver) {
+
+    return new StreamObserver<Request>() {
+
+        @Override
+        public void onNext(Request value) {
+            // process incoming data
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            System.out.println("Error: " + t.getMessage());
+        }
+
+        @Override
+        public void onCompleted() {
+
+            Response response = Response.newBuilder().build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        }
+    };
+}
+
+Bidirectional Streaming Template
+@Override
+public StreamObserver<Message> bidiStream(
+        StreamObserver<Message> responseObserver) {
+
+    return new StreamObserver<Message>() {
+
+        @Override
+        public void onNext(Message msg) {
+            // process message and respond
+            responseObserver.onNext(msg);
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            // handle disconnect
+        }
+
+        @Override
+        public void onCompleted() {
+            responseObserver.onCompleted();
+        }
+    };
+}
+
+server.java
+
+public class ServerTemplate {
+
+    public static void main(String[] args) throws Exception {
+
+        Server server = ServerBuilder.forPort(50051)
+
+                // Register services here
+                .addService(new ServiceImpl1())
+                .addService(new ServiceImpl2())
+
+                .build();
+
+        server.start();
+
+        System.out.println("Server started...");
+
+        server.awaitTermination();
+    }
+}
+
+client.java
+
+ManagedChannel channel = ManagedChannelBuilder
+        .forAddress("localhost", 50051)
+        .usePlaintext()
+        .build();
+🔹 Unary RPC Template
+ServiceGrpc.ServiceBlockingStub stub =
+        ServiceGrpc.newBlockingStub(channel)
+                .withDeadlineAfter(3, TimeUnit.SECONDS);
+
+Response response = stub.method(request);
+🔹 Server Streaming Template
+stub.streamMethod(request)
+    .forEachRemaining(res -> {
+        System.out.println(res);
+    });
+🔹 Client Streaming Template
+StreamObserver<Request> stream =
+    asyncStub.clientStream(new StreamObserver<Response>() {
+
+        @Override
+        public void onNext(Response value) {
+            System.out.println("Result received");
+        }
+
+        @Override
+        public void onError(Throwable t) {}
+
+        @Override
+        public void onCompleted() {}
+    });
+
+stream.onNext(data1);
+stream.onNext(data2);
+stream.onCompleted();
+🔹 Bidirectional Streaming Template
+StreamObserver<Message> chat =
+    asyncStub.bidiStream(new StreamObserver<Message>() {
+
+        @Override
+        public void onNext(Message msg) {
+            System.out.println(msg.getMessage());
+        }
+
+        @Override
+        public void onError(Throwable t) {}
+
+        @Override
+        public void onCompleted() {}
+    });
+
+// send messages
+chat.onNext(msg1);
+chat.onNext(msg2);
