@@ -21,7 +21,33 @@ public class NamingServiceImpl extends NamingServiceGrpc.NamingServiceImplBase {
     // save all registered service
     private List<ServiceInfo> serviceList = new ArrayList<>();
 
+    public NamingServiceImpl() {
+        serviceList.add(
+            ServiceInfo.newBuilder()
+                .setServiceName("StudentService")
+                .setHost("localhost")
+                .setPort(50051)
+                .build()
+        );
 
+        serviceList.add(
+            ServiceInfo.newBuilder()
+                .setServiceName("CourseService")
+                .setHost("localhost")
+                .setPort(50051)
+                .build()
+        );
+
+        serviceList.add(
+            ServiceInfo.newBuilder()
+                .setServiceName("AssessmentService")
+                .setHost("localhost")
+                .setPort(50051)
+                .build()
+        );
+    }
+    
+    
     // 1. Register Service (Unary RPC)
     @Override
     public void registerService(ServiceInfo request,

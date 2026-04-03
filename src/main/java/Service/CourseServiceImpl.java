@@ -10,7 +10,6 @@ package Service;
  * @author st101
  */
 import generated.course.*;
-import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 import java.util.ArrayList;
@@ -18,120 +17,55 @@ import java.util.List;
 
 public class CourseServiceImpl extends CourseServiceGrpc.CourseServiceImplBase {
 
-    // store the course
-    private List<Course> courseList = new ArrayList<>();
+    private List<Course> courses = new ArrayList<>();
 
-    // store the client
-    private List<StreamObserver<ChatMessage>> clients = new ArrayList<>();
+    public void createCourse(Course request,
+                             StreamObserver<CourseResponse> responseObserver) {
 
+        courses.add(request);
 
-    // 1. Unary RPC - createCourse
-    @Override
-    public void createCourse(CourseRequest request, StreamObserver<CourseResponse> responseObserver) {
-
-        // check empty
-        if (request.getCourseId().isEmpty() || request.getTitle().isEmpty() || request.getInstructor().isEmpty()) {
-
-            responseObserver.onError(
-                    Status.INVALID_ARGUMENT
-                            .withDescription("All fields must be filled")
-                            .asRuntimeException()
-            );
-            return;
-        }
-
-        // check if exist
-        for (Course c : courseList) {
-            if (c.getCourseId().equals(request.getCourseId())) {
-
-                responseObserver.onError(
-                        Status.ALREADY_EXISTS
-                                .withDescription("Course already exists")
-                                .asRuntimeException()
-                );
-                return;
-            }
-        }
-
-        // create course
-        Course newCourse = Course.newBuilder()
-                .setCourseId(request.getCourseId())
-                .setTitle(request.getTitle())
-                .setInstructor(request.getInstructor())
-                .build();
-
-        courseList.add(newCourse);
-
-        CourseResponse response = CourseResponse.newBuilder()
-                .setMessage("Course created successfully")
-                .build();
-
-        responseObserver.onNext(response);
+        responseObserver.onNext(
+                CourseResponse.newBuilder()
+                        .setMessage("Course created")
+                        .build()
+        );
         responseObserver.onCompleted();
     }
 
-
-    // 2. Server Streaming - streamAvailableCourses
     @Override
-    public void streamAvailableCourses(Empty request, StreamObserver<Course> responseObserver) {
+    public void streamAvailableCourses(Empty request,
+                                       StreamObserver<Course> responseObserver) {
 
-        // demo for no data
-        if (courseList.isEmpty()) {
-
-            courseList.add(
-                    Course.newBuilder()
-                            .setCourseId("C101")
-                            .setTitle("Distributed Systems")
-                            .setInstructor("Dr. Smith")
-                            .build()
-            );
-
-            courseList.add(
-                    Course.newBuilder()
-                            .setCourseId("C102")
-                            .setTitle("Cloud Computing")
-                            .setInstructor("Dr. Lee")
-                            .build()
-            );
-        }
-
-        // send the data
-        for (Course c : courseList) {
+        for (Course c : courses) {
             responseObserver.onNext(c);
         }
-
         responseObserver.onCompleted();
     }
 
-
-    // 3. Bidirectional Streaming - liveClassChat
+    // fix echo
     @Override
-    public StreamObserver<ChatMessage> liveClassChat(StreamObserver<ChatMessage> responseObserver) {
-
-        // add new client
-        clients.add(responseObserver);
+    public StreamObserver<ChatMessage> liveClassChat(
+            StreamObserver<ChatMessage> responseObserver) {
 
         return new StreamObserver<ChatMessage>() {
 
             @Override
-            public void onNext(ChatMessage message) {
+            public void onNext(ChatMessage msg) {
 
-                // receive client's message  > broadcasst
-                for (StreamObserver<ChatMessage> client : clients) {
-                    client.onNext(message);
-                }
+                responseObserver.onNext(
+                        ChatMessage.newBuilder()
+                                .setSender(msg.getSender())
+                                .setMessage(msg.getMessage())
+                                .setTimestamp(msg.getTimestamp())
+                                .build()
+                );
             }
 
             @Override
-            public void onError(Throwable t) {
-                System.out.println("Client disconnected: " + t.getMessage());
-                clients.remove(responseObserver);
-            }
+            public void onError(Throwable t) {}
 
             @Override
             public void onCompleted() {
-                //client leave
-                clients.remove(responseObserver);
                 responseObserver.onCompleted();
             }
         };
